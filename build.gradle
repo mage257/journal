@@ -1,0 +1,66 @@
+plugins {
+    id 'org.springframework.boot' version '2.5.1'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'com.github.hierynomus.license' version '0.15.0'
+    id 'java'
+    id 'idea'
+}
+
+group 'de.markus-geiss.component'
+version '1.0.0-SNAPSHOT'
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    maven { url = 'https://repo.spring.io/milestone' }
+    mavenCentral()
+}
+
+ext {
+    set('springGeodeVersion', "1.5.1")
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.hibernate:hibernate-validator:7.0.1.Final'
+
+    implementation 'org.springframework.geode:spring-geode-starter'
+
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.geode:spring-geode-starter-actuator'
+
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.geode:spring-geode-starter-test'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.geode:spring-geode-bom:${springGeodeVersion}"
+    }
+}
+
+license {
+    strictCheck true
+    ignoreFailures false
+    skipExistingHeaders true
+    mapping {
+        java = 'SLASHSTAR_STYLE'
+    }
+}
