@@ -26,7 +26,6 @@
  */
 package de.mage.component.journal.service;
 
-import de.mage.component.journal.JournalConfiguration;
 import de.mage.component.journal.data.Currency;
 import de.mage.component.journal.repository.CurrencyRepository;
 import java.math.BigDecimal;
@@ -34,8 +33,6 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

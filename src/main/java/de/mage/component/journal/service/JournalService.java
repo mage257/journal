@@ -26,7 +26,6 @@
  */
 package de.mage.component.journal.service;
 
-import de.mage.component.journal.JournalConfiguration;
 import de.mage.component.journal.common.TypedPage;
 import de.mage.component.journal.data.Document;
 import de.mage.component.journal.data.Journal;
@@ -36,8 +35,6 @@ import de.mage.component.journal.repository.DocumentRepository;
 import de.mage.component.journal.repository.JournalItemRepository;
 import de.mage.component.journal.repository.JournalRepository;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

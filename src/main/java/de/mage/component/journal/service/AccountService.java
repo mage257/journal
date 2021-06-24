@@ -26,7 +26,6 @@
  */
 package de.mage.component.journal.service;
 
-import de.mage.component.journal.JournalConfiguration;
 import de.mage.component.journal.data.Account;
 import de.mage.component.journal.data.Journal.State;
 import de.mage.component.journal.repository.AccountRepository;
@@ -36,8 +35,6 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicReference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
