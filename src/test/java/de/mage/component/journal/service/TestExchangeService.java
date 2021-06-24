@@ -26,8 +26,8 @@
  */
 package de.mage.component.journal.service;
 
-import de.mage.component.journal.data.Currency;
-import de.mage.component.journal.repository.CurrencyRepository;
+import de.mage.component.journal.processor.CurrencyRequestProcessor;
+import de.mage.component.journal.request.SetCurrencyRequest;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 public class TestExchangeService {
 
   @Autowired
-  private CurrencyRepository currencyRepository;
+  private CurrencyRequestProcessor currencyRequestProcessor;
 
   @Autowired
   private ExchangeService exchangeService;
@@ -74,26 +74,22 @@ public class TestExchangeService {
   @Test
   public void shouldExchangeDifferentSourceCurrency() {
     final String usd = "USD";
-    this.currencyRepository.findById(usd)
-        .orElseGet(() -> {
-          final Currency newCurrency = new Currency();
-          newCurrency.setCode(usd);
-          newCurrency.setRate(BigDecimal.valueOf(1.1925535D));
-          newCurrency.setPrecision(2);
-          this.currencyRepository.save(newCurrency);
-          return newCurrency;
-        });
+    this.currencyRequestProcessor.process(
+        SetCurrencyRequest
+            .create(usd)
+            .rate(BigDecimal.valueOf(1.1925535D))
+            .precision(2)
+            .build()
+    );
 
     final String eur = "EUR";
-    this.currencyRepository.findById(eur)
-        .orElseGet(() -> {
-          final Currency newCurrency = new Currency();
-          newCurrency.setCode(eur);
-          newCurrency.setRate(BigDecimal.ONE);
-          newCurrency.setPrecision(2);
-          this.currencyRepository.save(newCurrency);
-          return newCurrency;
-        });
+    this.currencyRequestProcessor.process(
+        SetCurrencyRequest
+            .create(eur)
+            .rate(BigDecimal.ONE)
+            .precision(2)
+            .build()
+    );
 
     final BigDecimal result =
         this.exchangeService.estimateAmount(BigDecimal.TEN, usd, eur);
@@ -103,26 +99,22 @@ public class TestExchangeService {
   @Test
   public void shouldExchangeDifferentTargetCurrency() {
     final String eur = "EUR";
-    this.currencyRepository.findById(eur)
-        .orElseGet(() -> {
-          final Currency newCurrency = new Currency();
-          newCurrency.setCode(eur);
-          newCurrency.setRate(BigDecimal.ONE);
-          newCurrency.setPrecision(2);
-          this.currencyRepository.save(newCurrency);
-          return newCurrency;
-        });
+    this.currencyRequestProcessor.process(
+        SetCurrencyRequest
+            .create(eur)
+            .rate(BigDecimal.ONE)
+            .precision(2)
+            .build()
+    );
 
     final String gbp = "GBP";
-    this.currencyRepository.findById(gbp)
-        .orElseGet(() -> {
-          final Currency newCurrency = new Currency();
-          newCurrency.setCode(gbp);
-          newCurrency.setRate(BigDecimal.valueOf(0.85430612D));
-          newCurrency.setPrecision(2);
-          this.currencyRepository.save(newCurrency);
-          return newCurrency;
-        });
+    this.currencyRequestProcessor.process(
+        SetCurrencyRequest
+            .create(gbp)
+            .rate(BigDecimal.valueOf(0.85430612D))
+            .precision(2)
+            .build()
+    );
 
     final BigDecimal result = this.exchangeService.estimateAmount(BigDecimal.TEN, eur, gbp);
     Assertions.assertEquals(0, BigDecimal.valueOf(8.54D).compareTo(result));
@@ -131,26 +123,22 @@ public class TestExchangeService {
   @Test
   public void shouldExchangeDifferentSourceAndTargetCurrency() {
     final String gbp = "GBP";
-    this.currencyRepository.findById(gbp)
-        .orElseGet(() -> {
-          final Currency newCurrency = new Currency();
-          newCurrency.setCode(gbp);
-          newCurrency.setRate(BigDecimal.valueOf(0.85430612D));
-          newCurrency.setPrecision(2);
-          this.currencyRepository.save(newCurrency);
-          return newCurrency;
-        });
+    this.currencyRequestProcessor.process(
+        SetCurrencyRequest
+            .create(gbp)
+            .rate(BigDecimal.valueOf(0.85430612D))
+            .precision(2)
+            .build()
+    );
 
     final String usd = "USD";
-    this.currencyRepository.findById(usd)
-        .orElseGet(() -> {
-          final Currency newCurrency = new Currency();
-          newCurrency.setCode(usd);
-          newCurrency.setRate(BigDecimal.valueOf(1.1925535D));
-          newCurrency.setPrecision(2);
-          this.currencyRepository.save(newCurrency);
-          return newCurrency;
-        });
+    this.currencyRequestProcessor.process(
+        SetCurrencyRequest
+            .create(usd)
+            .rate(BigDecimal.valueOf(1.1925535D))
+            .precision(2)
+            .build()
+    );
 
     final BigDecimal result =
         this.exchangeService.estimateAmount(BigDecimal.valueOf(8.54D), gbp, usd);
