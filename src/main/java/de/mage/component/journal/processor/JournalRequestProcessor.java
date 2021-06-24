@@ -37,6 +37,9 @@ import de.mage.component.journal.domain.AttachDocumentRequest;
 import de.mage.component.journal.domain.CreateJournalRequest;
 import de.mage.component.journal.domain.TransitionJournalRequest;
 import de.mage.component.journal.domain.TransitionJournalRequest.Action;
+import de.mage.component.journal.exception.RequestValidationException;
+import de.mage.component.journal.exception.ResourceConflictException;
+import de.mage.component.journal.exception.ResourceNotFoundException;
 import de.mage.component.journal.repository.DocumentRepository;
 import de.mage.component.journal.repository.JournalItemRepository;
 import de.mage.component.journal.repository.JournalRepository;
@@ -54,9 +57,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class JournalRequestProcessor {
-
-  private static final Logger LOGGER =
-      LoggerFactory.getLogger(JournalConfiguration.LOGGER_NAME);
 
   private final SnowflakeService snowflakeService;
   private final JournalRepository journalRepository;
@@ -78,10 +78,9 @@ public class JournalRequestProcessor {
   @Transactional
   public Long process(final CreateJournalRequest request) {
     if (this.journalRepository.findByIdentifier(request.getIdentifier()).isPresent()) {
-      final String errorMessage =
-          String.format("Journal with identifier '%s' already exists.", request.getIdentifier());
-      LOGGER.warn(errorMessage);
-      throw new IllegalStateException(errorMessage);
+      throw new ResourceConflictException(
+          String.format("Journal with identifier '%s' already exists.", request.getIdentifier())
+      );
     }
 
     final long sequence = this.snowflakeService.next();
@@ -134,9 +133,7 @@ public class JournalRequestProcessor {
     );
 
     if (source.getAmount().compareTo(targetSumReference.get()) != 0) {
-      final String errorMessage = "Item is not in balance.";
-      LOGGER.warn(errorMessage);
-      throw new IllegalStateException(errorMessage);
+      throw new RequestValidationException("Item is not in balance.");
     }
 
     journalItem.setPurpose(request.getPurpose());
@@ -147,16 +144,14 @@ public class JournalRequestProcessor {
   @Transactional
   public void process(final Long sequence, final Long itemSequence,
       final AttachDocumentRequest request) {
-    final Journal journal = this.resolveAndValidate(sequence, State.PREPARATION);
+    this.resolveAndValidate(sequence, State.PREPARATION);
 
     final JournalItem referencedItem =
         this.journalItemRepository
             .findById(itemSequence)
-            .orElseThrow(() -> {
-              final String errorMessage = String.format("Journal item '%s' not found.", itemSequence);
-              LOGGER.warn(errorMessage);
-              return new IllegalArgumentException(errorMessage);
-            });
+            .orElseThrow(() ->
+                new ResourceNotFoundException(String.format("Journal item '%s' not found.", itemSequence))
+            );
 
     final Document document = new Document();
     document.setSequence(this.snowflakeService.next());
@@ -178,16 +173,14 @@ public class JournalRequestProcessor {
 
   Journal resolveAndValidate(final Long sequence, final State expectedState) {
     final Journal journal = this.journalRepository.findById(sequence)
-        .orElseThrow(() -> {
-          final String errorMessage = String.format("Journal '%s' not found.", sequence);
-          LOGGER.warn(errorMessage);
-          return new IllegalArgumentException(errorMessage);
-        });
+        .orElseThrow(() ->
+            new ResourceNotFoundException(String.format("Journal '%s' not found.", sequence))
+        );
 
     if (journal.getState() != expectedState) {
-      final String errorMessage = String.format("Journal '%s' is not in expected state.", sequence);
-      LOGGER.warn(errorMessage);
-      throw new IllegalStateException(errorMessage);
+      throw new ResourceConflictException(
+          String.format("Journal '%s' is not in expected state.", sequence)
+      );
     }
 
     return journal;

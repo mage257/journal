@@ -116,7 +116,7 @@ public class TestJournalService extends IntegrationTestsSupport {
 
     this.journalRequestProcessor.process(sequence, addItemRequest);
 
-    final List<JournalItem> journalItems = this.journalService.findAllByJournal(sequence);
+    final List<JournalItem> journalItems = this.journalService.findAllItemsByJournal(sequence);
     Assertions.assertNotNull(journalItems);
     Assertions.assertEquals(1, journalItems.size());
 
@@ -143,7 +143,7 @@ public class TestJournalService extends IntegrationTestsSupport {
     this.journalRequestProcessor.process(sequence, journalItem.getSequence(), attachDocumentRequest);
 
     final List<Document> documents =
-        this.journalService.findAllByJournalItem(journalItem.getSequence());
+        this.journalService.findAllDocumentsByJournalItem(journalItem.getSequence());
     Assertions.assertNotNull(documents);
     Assertions.assertEquals(1, documents.size());
 

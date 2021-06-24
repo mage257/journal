@@ -44,10 +44,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class AccountService {
 
-  private static final Logger LOGGER =
-      LoggerFactory.getLogger(JournalConfiguration.LOGGER_NAME);
-
-
   private final ExchangeService exchangeService;
   private final JournalRepository journalRepository;
   private final JournalItemRepository journalItemRepository;

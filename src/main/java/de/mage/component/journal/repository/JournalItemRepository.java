@@ -32,6 +32,5 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface JournalItemRepository extends CrudRepository<JournalItem, Long> {
 
-  //@Query("SELECT * FROM /journal-items i WHERE i.journalSequence = $1 ORDER BY i.sequence")
   List<JournalItem> findAllByJournalSequenceOrderBySequence(final Long journalSequence);
 }

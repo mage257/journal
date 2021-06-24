@@ -36,6 +36,7 @@ import org.springframework.geode.config.annotation.EnableClusterAware;
 @Configuration
 @ComponentScan(
     basePackages = {
+        "de.mage.component.journal.presentation",
         "de.mage.component.journal.processor",
         "de.mage.component.journal.service",
         "de.mage.component.journal.repository"
