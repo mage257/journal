@@ -24,37 +24,19 @@
  *
  * For more information, please refer to <https://unlicense.org>
  */
-package de.mage.component.journal.presentation;
+package de.mage.component.journal.common;
 
-import de.mage.component.journal.common.Balance;
-import de.mage.component.journal.service.AccountService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import java.math.BigDecimal;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@RestController
-@RequestMapping(path = "/account/{number}")
-public class AccountController {
-
-  private final AccountService accountService;
-
-  @Autowired
-  public AccountController(final AccountService accountService) {
-    this.accountService = accountService;
-  }
-
-  @RequestMapping(
-      consumes = MediaType.ALL_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE
-  )
-  @ResponseStatus(HttpStatus.OK)
-  public Balance getBalance(@PathVariable("number") final String number,
-      @RequestParam(value = "currency", defaultValue = "EUR") final String currency) {
-    return this.accountService.determineBalance(number, currency);
-  }
+@NoArgsConstructor
+@Getter
+@Setter
+public class Balance {
+  private String accountNumber;
+  private String currencyCode;
+  private BigDecimal accountBalance;
+  private BigDecimal reportingBalance;
 }

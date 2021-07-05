@@ -26,6 +26,7 @@
  */
 package de.mage.component.journal.service;
 
+import de.mage.component.journal.common.Balance;
 import de.mage.component.journal.data.Document;
 import de.mage.component.journal.data.Journal;
 import de.mage.component.journal.data.JournalItem;
@@ -40,6 +41,7 @@ import de.mage.component.journal.request.TransitionJournalRequest.Action;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Random;
@@ -79,7 +81,7 @@ public class TestJournalService extends IntegrationTestsSupport {
   public void givenExistingJournal_whenAddingItem_shouldSucceed() {
     final CreateJournalRequest createJournalRequest =
         CreateJournalRequest
-            .create(this.randomString(32), "EUR")
+            .create(this.randomString(), "EUR")
             .valueDate(LocalDate.now())
             .build();
 
@@ -90,25 +92,27 @@ public class TestJournalService extends IntegrationTestsSupport {
     Assertions.assertNotNull(journal);
 
     final Builder itemRequestBuilder = AddItemRequest
-        .create(this.randomString(32));
+        .create(this.randomString());
 
     final Allocation debtor = new Allocation();
-    debtor.setAccountReference(this.randomString(32));
+    debtor.setAccountReference(this.randomString());
     debtor.setAmount(BigDecimal.TEN);
     itemRequestBuilder.source(debtor);
 
     final long creditorCount = 2L;
+    final ArrayList<String> creditorAccounts = new ArrayList<>();
     Stream
         .iterate(0, index -> index += 1)
         .limit(creditorCount)
         .forEach(index -> {
           final Allocation creditor = new Allocation();
-          creditor.setAccountReference(this.randomString(32));
+          creditor.setAccountReference(this.randomString());
           creditor.setAmount(
               debtor.getAmount()
                   .divide(BigDecimal.valueOf(creditorCount), MathContext.DECIMAL128)
           );
           itemRequestBuilder.addTarget(creditor);
+          creditorAccounts.add(creditor.getAccountReference());
         });
 
     this.journalRequestProcessor.process(sequence, itemRequestBuilder.build());
@@ -119,15 +123,15 @@ public class TestJournalService extends IntegrationTestsSupport {
 
     journalItems.forEach(journalItem -> {
       final JournalItem.Allocation source = journalItem.getSource();
-      final BigDecimal sourceBalance =
+      final Balance sourceBalance =
           this.accountService.determineBalance(source.getAccountReference(), "EUR");
-      Assertions.assertEquals(0, BigDecimal.ZERO.compareTo(sourceBalance));
+      Assertions.assertEquals(0, BigDecimal.ZERO.compareTo(sourceBalance.getAccountBalance()));
 
       journalItem.getTargets()
           .forEach(target -> {
-            final BigDecimal targetBalance =
+            final Balance targetBalance =
                 this.accountService.determineBalance(target.getAccountReference(), "EUR");
-            Assertions.assertEquals(0, BigDecimal.ZERO.compareTo(targetBalance));
+            Assertions.assertEquals(0, BigDecimal.ZERO.compareTo(targetBalance.getAccountBalance()));
           });
     });
 
@@ -155,13 +159,26 @@ public class TestJournalService extends IntegrationTestsSupport {
 
     this.journalRequestProcessor.process(sequence, TransitionJournalRequest.of(Action.RELEASE));
 
-    final BigDecimal releaseBalance =
+    final Balance releaseBalance =
         this.accountService.determineBalance(debtor.getAccountReference(), "EUR");
-    Assertions.assertEquals(0, releaseBalance.compareTo(BigDecimal.TEN.negate()));
+    Assertions.assertEquals(0, releaseBalance.getAccountBalance().compareTo(BigDecimal.TEN.negate()));
+
+    final BigDecimal creditorAccountBalanceSum = creditorAccounts
+        .stream()
+        .map(accountNumber -> {
+          final Balance balance = this.accountService.determineBalance(accountNumber, "EUR");
+          return balance.getAccountBalance();
+        })
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+    Assertions.assertEquals(0,
+        creditorAccountBalanceSum
+            .add(releaseBalance.getAccountBalance(), MathContext.DECIMAL128)
+            .compareTo(BigDecimal.ZERO)
+    );
   }
 
-  private String randomString(final int size) {
-    final byte[] randomBytes = new byte[size];
+  private String randomString() {
+    final byte[] randomBytes = new byte[32];
     random.nextBytes(randomBytes);
     return Base64.getEncoder().encodeToString(randomBytes);
   }

@@ -26,6 +26,7 @@
  */
 package de.mage.component.journal.service;
 
+import de.mage.component.journal.common.Balance;
 import de.mage.component.journal.data.Account;
 import de.mage.component.journal.data.Journal.State;
 import de.mage.component.journal.repository.AccountRepository;
@@ -36,6 +37,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -45,6 +47,9 @@ public class AccountService {
   private final JournalRepository journalRepository;
   private final JournalItemRepository journalItemRepository;
   private final AccountRepository accountRepository;
+
+  @Value("${de.mage.base-currency:EUR}")
+  private String baseCurrency;
 
   @Autowired
   public AccountService(
@@ -59,7 +64,7 @@ public class AccountService {
     this.accountRepository = accountRepository;
   }
 
-  public BigDecimal determineBalance(final String accountNumber, final String currencyCode) {
+  public Balance determineBalance(final String accountNumber, final String currencyCode) {
     final Account account = this.accountRepository.findById(accountNumber)
         .orElseGet(() -> {
           final Account newAccount = new Account();
@@ -69,7 +74,7 @@ public class AccountService {
           return newAccount;
         });
 
-    final AtomicReference<BigDecimal> balanceReference = new AtomicReference<>(account.getBalance());
+    final AtomicReference<BigDecimal> accountBalanceReference = new AtomicReference<>(account.getBalance());
     final AtomicReference<Long> valueDateReference = new AtomicReference<>(account.getLastSynchronizedSequence());
 
     final LocalDate now = LocalDate.now(Clock.systemUTC());
@@ -81,14 +86,14 @@ public class AccountService {
               this.journalItemRepository.findAllByJournalSequenceOrderBySequence(journal.getSequence())
                   .forEach(journalItem -> {
                     if (journalItem.getSource().getAccountReference().equals(accountNumber)) {
-                      balanceReference
+                      accountBalanceReference
                           .getAndAccumulate(
                               this.exchangeService.estimateAmount(journalItem.getSource().getAmount(), journal.getCurrencyCode(), currencyCode),
                               BigDecimal::subtract
                           );
                     }
 
-                    balanceReference.getAndAccumulate(
+                    accountBalanceReference.getAndAccumulate(
                         journalItem.getTargets()
                             .stream()
                             .filter(
@@ -110,10 +115,22 @@ public class AccountService {
               });
             });
 
-    account.setBalance(balanceReference.get());
+    account.setBalance(accountBalanceReference.get());
     account.setLastSynchronizedSequence(valueDateReference.get());
     this.accountRepository.save(account);
 
-    return balanceReference.get();
+    final Balance balance = new Balance();
+    balance.setAccountNumber(accountNumber);
+    balance.setCurrencyCode(currencyCode);
+    balance.setAccountBalance(accountBalanceReference.get());
+    balance.setReportingBalance(
+        this.exchangeService.estimateAmount(
+            balance.getAccountBalance(),
+            balance.getCurrencyCode(),
+            this.baseCurrency
+        )
+    );
+
+    return balance;
   }
 }
