@@ -6,7 +6,7 @@ plugins {
     id 'idea'
 }
 
-group 'de.markus-geiss.component'
+group 'io.conjuror.component'
 version '1.0.0-SNAPSHOT'
 
 sourceCompatibility = JavaVersion.VERSION_11
@@ -63,4 +63,5 @@ license {
     mapping {
         java = 'SLASHSTAR_STYLE'
     }
+    exclude "**/*.json"
 }

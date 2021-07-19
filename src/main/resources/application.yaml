@@ -36,8 +36,8 @@ spring:
     converters:
       preferred-json-mapper: gson
 
-de:
-  mage:
+io:
+  conjuror:
     sequence:
       tenant: mage-test
       service: ${COMPUTERNAME}
