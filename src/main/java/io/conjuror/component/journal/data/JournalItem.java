@@ -50,6 +50,10 @@ public class JournalItem {
   public static class Allocation {
     private String accountReference;
     private BigDecimal amount;
+
+    public String asText() {
+      return String.join("#", accountReference, amount.toPlainString());
+    }
   }
 
   @Id

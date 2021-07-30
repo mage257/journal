@@ -64,4 +64,5 @@ public class Journal {
   private String createdBy;
   private LocalDateTime releasedAt;
   private String releasedBy;
+  private String fingerPrint;
 }

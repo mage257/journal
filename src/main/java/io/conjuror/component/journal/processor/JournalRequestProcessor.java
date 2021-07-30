@@ -42,9 +42,12 @@ import io.conjuror.component.journal.request.AttachDocumentRequest;
 import io.conjuror.component.journal.request.CreateJournalRequest;
 import io.conjuror.component.journal.request.TransitionJournalRequest;
 import io.conjuror.component.journal.request.TransitionJournalRequest.Action;
+import io.conjuror.component.journal.service.FingerprintService;
 import io.conjuror.component.journal.service.SnowflakeService;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -56,6 +59,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class JournalRequestProcessor {
 
   private final SnowflakeService snowflakeService;
+  private final FingerprintService fingerprintService;
   private final JournalRepository journalRepository;
   private final JournalItemRepository journalItemRepository;
   private final DocumentRepository documentRepository;
@@ -63,10 +67,13 @@ public class JournalRequestProcessor {
   @Autowired
   public JournalRequestProcessor(
       final SnowflakeService snowflakeService,
+      final FingerprintService fingerprintService,
       final JournalRepository journalRepository,
       final JournalItemRepository journalItemRepository,
       final DocumentRepository documentRepository) {
+    super();
     this.snowflakeService = snowflakeService;
+    this.fingerprintService = fingerprintService;
     this.journalRepository = journalRepository;
     this.journalItemRepository = journalItemRepository;
     this.documentRepository = documentRepository;
@@ -96,6 +103,7 @@ public class JournalRequestProcessor {
       );
     }
     journal.setCurrencyCode(request.getCurrencyCode());
+    journal.setCreatedAt(LocalDateTime.now(Clock.systemUTC()));
     journal.setState(State.PREPARATION);
     this.journalRepository.save(journal);
     return sequence;
@@ -165,6 +173,17 @@ public class JournalRequestProcessor {
     final Action action = request.getAction();
     final Journal journal = this.resolveAndValidate(sequence, action.expectedState());
     journal.setState(action.desiredState());
+
+    if (action == Action.SCHEDULE) {
+      try {
+        journal.setFingerPrint(this.fingerprintService.generate(sequence));
+      } catch (final Exception ex) {
+        throw new RequestValidationException(
+            String.format("Could not generate finger print for journal '%s'", sequence)
+        );
+      }
+    }
+
     this.journalRepository.save(journal);
   }
 

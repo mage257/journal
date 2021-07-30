@@ -73,16 +73,21 @@ public class TestJournalService extends IntegrationTestsSupport {
   @Autowired
   private AccountService accountService;
 
+  @Autowired
+  private FingerprintService fingerprintService;
+
   public TestJournalService() {
     super();
   }
 
   @Test
-  public void givenExistingJournal_whenAddingItem_shouldSucceed() {
+  public void givenExistingJournal_whenAddingItem_shouldSucceed() throws Exception {
+    final LocalDate now = LocalDate.now();
     final CreateJournalRequest createJournalRequest =
         CreateJournalRequest
             .create(this.randomString(), "EUR")
-            .valueDate(LocalDate.now())
+            .valueDate(now)
+            .bookingDate(now)
             .build();
 
     final Long sequence = this.journalRequestProcessor.process(createJournalRequest);
@@ -175,6 +180,9 @@ public class TestJournalService extends IntegrationTestsSupport {
             .add(releaseBalance.getAccountBalance(), MathContext.DECIMAL128)
             .compareTo(BigDecimal.ZERO)
     );
+
+    final Journal processedJournal = this.journalService.findJournal(sequence);
+    Assertions.assertTrue(this.fingerprintService.valid(processedJournal.getFingerPrint(), sequence));
   }
 
   private String randomString() {
