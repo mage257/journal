@@ -27,8 +27,7 @@
 package io.conjuror.component.journal.request;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -36,70 +35,42 @@ import javax.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 
-@NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-@Setter
-public class AddItemRequest {
+public class CalculationRequest {
   @NotBlank
   @Size(min = 4, max = 64)
-  private String identifier;
+  private String agreementNumber;
+  @NotBlank
+  @Size(min = 4, max = 64)
+  private String priceComponentCode;
   @NotNull
-  @Size(min = 1)
-  private Allocation source;
+  private LocalDateTime referenceDate;
   @NotNull
-  @Size(min = 1)
-  private List<Allocation> targets;
-  @Size(max = 4096)
-  private String purpose;
+  @Digits(integer = 12, fraction = 12)
+  private BigDecimal underlying;
 
-  @NoArgsConstructor
-  @Getter
-  @Setter
-  public static class Allocation {
-    @NotBlank
-    @Size(min = 4, max = 64)
-    private String accountReference;
-    @NotNull
-    @Digits(integer = 12, fraction = 12)
-    private BigDecimal amount;
-  }
-
-  public static Builder create(final String identifier) {
-    return new Builder(identifier);
+  public static Builder create(final String agreementNumber, final String priceComponentCode,
+      final LocalDateTime referenceDate) {
+    return new Builder(agreementNumber, priceComponentCode, referenceDate);
   }
 
   @RequiredArgsConstructor
   public static class Builder {
-    private final String identifier;
-    private Allocation source;
-    private List<Allocation> targets;
-    private String purpose;
+    private final String agreementNumber;
+    private final String priceComponentCode;
+    private final LocalDateTime referenceDate;
+    private BigDecimal underlying;
 
-    public Builder source(final Allocation source) {
-      this.source = source;
+    public Builder underlying(final BigDecimal underlying) {
+      this.underlying = underlying;
       return this;
     }
 
-    public Builder addTarget(final Allocation target) {
-      if (this.targets == null) {
-        this.targets = new ArrayList<>();
-      }
-      this.targets.add(target);
-      return this;
-    }
-
-    public Builder purpose(final String purpose) {
-      this.purpose = purpose;
-      return this;
-    }
-
-    public AddItemRequest build() {
-      return new AddItemRequest(this.identifier, this.source, this.targets, this.purpose);
+    public CalculationRequest build() {
+      return new CalculationRequest(this.agreementNumber, this.priceComponentCode, this.referenceDate, this.underlying);
     }
   }
 }
